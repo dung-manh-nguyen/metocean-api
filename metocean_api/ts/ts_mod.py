@@ -98,7 +98,36 @@ class TimeSeries:
     self.data = pd.read_csv(local_file,comment='#',index_col=0, parse_dates=True)
 
 
-
+  def download_NK800_2(lon0,lat0,path):
+    # this download u_eastward,v_northward and save to folder path 
+    # coordinate of location of interest lon0, lat 0
+    # path: a folder to save files
+    try:
+        os.mkdir(path) 
+    except:
+        pass
+    
+    ## getting all files then download data at all depth layers, save to a folder 
+    files = getListOfFiles('/lustre/storeB/project/copernicus/sea/romsnorkystv2/zdepths1h')
+    files.sort()
+    
+    nc = Dataset(files[0])
+    lon = nc.variables['lon'][:]
+    lat = nc.variables['lat'][:]
+    
+    eta, xi = getIndexes_newNK800(files[0],lon0,lat0)
+    
+    for i in range(len(files)): # 1297: 2021.01.01 and 2026: 2022.12.31
+        file2read = Dataset(files[i])
+        dictionary = {}
+        dictionary['time'] = file2read['time'][:]
+        dictionary['u_eastward'] = file2read['u_eastward'][:,:,eta,xi]
+        dictionary['v_northward'] = file2read['v_northward'][:,:,eta,xi]
+        
+        outf = files[i][-13:]+'.pkl'
+        with open(outf, 'wb') as f:
+            pickle.dump(dictionary, f)
+            shutil.move(outf, path)
 
 
 
